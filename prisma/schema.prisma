@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CASHIER
+  WAREHOUSE
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String?
+  password   String
+  role       Role     @default(CASHIER)
+  expiryDate DateTime? // <--- تمت إضافة حقل تاريخ انتهاء الترخيص هنا
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  sales      Sale[]
+}
+
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  address   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+model Product {
+  id                String    @id @default(cuid())
+  name              String
+  imageUrl          String?
+  barcode           String?   @unique
+  category          String?
+  price             Float
+  cost              Float
+  stock             Int       @default(0)
+  lowStockThreshold Int       @default(10)
+  supplierId        String?
+  supplier          Supplier? @relation(fields: [supplierId], references: [id])
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  saleItems         SaleItem[]
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  invoiceNumber String     @unique
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  subtotal      Float
+  tax           Float      @default(0)
+  discount      Float      @default(0)
+  total         Float
+  createdAt     DateTime   @default(now())
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+
+  @@index([saleId])
+  @@index([productId])
+}
+model StoreSettings {
+  id        String   @id @default("global_settings") // سطر واحد فقط في قاعدة البيانات
+  storeName String   @default("متجري")
+  logoUrl   String?  // رابط صورة الشعار
+  updatedAt DateTime @updatedAt
+}
