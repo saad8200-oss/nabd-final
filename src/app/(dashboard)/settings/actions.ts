@@ -95,3 +95,30 @@ export async function updateStoreSettings(formData: FormData) {
   revalidatePath("/login"); // لتحديث صفحة الدخول بالشعار الجديد
   return { success: true };
 }
+import fs from "fs";
+import path from "path";
+
+export async function restoreBackup(formData: FormData) {
+  const file = formData.get("backupFile") as File;
+  
+  if (!file) return { error: "لم يتم اختيار ملف" };
+  
+  // التحقق من الامتداد
+  if (!file.name.endsWith(".db")) return { error: "يجب أن يكون الملف بصيغة .db" };
+
+  try {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    
+    // مسار حفظ قاعدة البيانات
+    const dbPath = path.join(process.cwd(), "prisma", "dev.db");
+    
+    // استبدال الملف الحالي
+    fs.writeFileSync(dbPath, buffer);
+    
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    return { error: "حدث خطأ أثناء استعادة النسخة الاحتياطية" };
+  }
+}

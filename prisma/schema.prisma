@@ -14,15 +14,15 @@ enum Role {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
-  name       String?
-  password   String
-  role       Role     @default(CASHIER)
-  expiryDate DateTime? // <--- تمت إضافة حقل تاريخ انتهاء الترخيص هنا
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  sales      Sale[]
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(CASHIER)
+  expiryDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sales     Sale[]
 }
 
 model Supplier {
@@ -63,6 +63,7 @@ model Sale {
   tax           Float      @default(0)
   discount      Float      @default(0)
   total         Float
+  isReturned    Boolean    @default(false) // <--- تمت إضافة هذا الحقل
   createdAt     DateTime   @default(now())
   items         SaleItem[]
 }
@@ -79,9 +80,10 @@ model SaleItem {
   @@index([saleId])
   @@index([productId])
 }
+
 model StoreSettings {
-  id        String   @id @default("global_settings") // سطر واحد فقط في قاعدة البيانات
+  id        String   @id @default("global_settings")
   storeName String   @default("متجري")
-  logoUrl   String?  // رابط صورة الشعار
+  logoUrl   String?
   updatedAt DateTime @updatedAt
 }

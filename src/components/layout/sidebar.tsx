@@ -3,22 +3,23 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, FileText, Settings, Activity } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Settings, Activity, Truck } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 const navItems = [
   { name: "لوحة التحكم", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "CASHIER", "WAREHOUSE"] },
   { name: "المخازن", href: "/inventory", icon: Package, roles: ["ADMIN", "WAREHOUSE"] },
+  { name: "الموردين", href: "/suppliers", icon: Truck, roles: ["ADMIN", "WAREHOUSE"] }, // <--- تمت الإضافة هنا
   { name: "نقطة البيع", href: "/pos", icon: ShoppingCart, roles: ["ADMIN", "CASHIER"] },
   { name: "الفواتير والتقارير", href: "/reports", icon: FileText, roles: ["ADMIN"] },
-  { name: "الإعدادات", href: "/settings", icon: Settings, roles: ["ADMIN"], superAdminOnly: true }, // <--- تمت الإضافة
+  { name: "الإعدادات", href: "/settings", icon: Settings, roles: ["ADMIN"], superAdminOnly: true },
 ];
 
 function SidebarContent() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "";
-  const userEmail = (session?.user as any)?.email || ""; // <--- تمت الإضافة لمعرفة البريد
+  const userEmail = (session?.user as any)?.email || "";
 
   return (
     <aside style={{ width: '16rem', backgroundColor: 'rgba(15, 23, 42, 0.8)', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, right: 0 }}>
@@ -31,7 +32,7 @@ function SidebarContent() {
         {navItems.map((item) => {
           if (!item.roles.includes(userRole)) return null;
           
-          // منع العميل من رؤية صفحة الإعدادات (مخصصة فقط لبريد admin@nabd.com)
+          // منع العميل من رؤية صفحة الإعدادات
           if (item.superAdminOnly && userEmail !== "admin@nabd.com") return null;
 
           const isActive = pathname === item.href;

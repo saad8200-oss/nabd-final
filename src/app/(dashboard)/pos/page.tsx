@@ -15,6 +15,7 @@ interface Product {
   stock: number;
   imageUrl: string | null;
   category: string | null;
+  barcode: string | null;
 }
 
 export default function POSPage() {
@@ -22,7 +23,7 @@ export default function POSPage() {
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const { items, addItem, removeItem, updateQuantity, clearCart, getTotal } = useCartStore();
+  const { items, addItem, removeItem, updateQuantity, clearCart, getSubtotal, getTotal, discount, setDiscount } = useCartStore();
 
   useEffect(() => {
     fetch("/api/products")
@@ -35,13 +36,25 @@ export default function POSPage() {
     p.name.includes(search) || (p.category && p.category.includes(search))
   );
 
+  // دالة التعامل مع الباركود (عند الضغط على Enter)
+  const handleBarcodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const product = products.find(p => p.barcode === search || p.name === search);
+    
+    if (product) {
+      addItem({ id: product.id, name: product.name, price: product.price, maxStock: product.stock });
+      setSearch(""); // مسح الحقل بعد الإضافة
+    } else {
+      alert("المنتج غير موجود! تأكد من الباركود.");
+    }
+  };
+
   const handleCheckout = async () => {
     if (items.length === 0) return;
     
     setIsProcessing(true);
     try {
-      const total = getTotal();
-      await processSale(items, total);
+      await processSale(items, getTotal(), discount, getSubtotal());
       clearCart();
       alert("تمت عملية البيع بنجاح! تم خصم الكميات من المخزون.");
     } catch (error) {
@@ -53,22 +66,24 @@ export default function POSPage() {
   };
 
   return (
-    // الحاوية الرئيسية مقسمة إلى قسمين
     <div style={{ display: 'flex', gap: '1.5rem', height: 'calc(100vh - 8rem)' }}>
       
-      {/* قسم المنتجات (يمين) */}
+      {/* قسم المنتجات */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ position: 'relative' }}>
+        
+        {/* حقل البحث والباركود */}
+        <form onSubmit={handleBarcodeSubmit} style={{ position: 'relative' }}>
           <Search style={{ position: 'absolute', right: '0.75rem', top: '0.75rem', width: '1rem', height: '1rem', color: '#94a3b8' }} />
           <Input 
-            placeholder="ابحث عن منتج..." 
+            placeholder="امسح الباركود أو ابحث بالاسم..." 
             style={{ paddingRight: '2.5rem', backgroundColor: 'rgba(30, 41, 59, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
+        </form>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem', overflowY: 'auto', paddingBottom: '1rem' }}>
+        {/* شبكة المنتجات */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem', overflowY: 'auto', paddingBottom: '1rem' }}>
           {filteredProducts.map((product) => (
             <button
               key={product.id}
@@ -94,7 +109,7 @@ export default function POSPage() {
         </div>
       </div>
 
-      {/* قسم السلة (يسار) - تصميم زجاجي مباشر */}
+      {/* قسم السلة */}
       <div style={{ 
         width: '380px', display: 'flex', flexDirection: 'column', 
         backgroundColor: 'rgba(30, 41, 59, 0.6)', backdropFilter: 'blur(24px)', 
@@ -139,14 +154,32 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* تذييل السلة (الإجمالي والدفع) */}
-        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.125rem', fontWeight: 'bold', color: '#f8fafc' }}>
-            <span>الإجمالي:</span>
+        {/* تذييل السلة */}
+        <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#94a3b8' }}>
+            <span>المجموع الفرعي:</span>
+            <span>{getSubtotal()} ج.م</span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
+            <span style={{ color: '#94a3b8' }}>الخصم (ج.م):</span>
+            <input 
+              type="number" 
+              value={discount || ""} 
+              onChange={(e) => setDiscount(Number(e.target.value))}
+              placeholder="0"
+              style={{ width: '80px', padding: '0.25rem', borderRadius: '0.25rem', backgroundColor: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', textAlign: 'center' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.125rem', fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+            <span style={{ color: '#f8fafc' }}>الإجمالي:</span>
             <span style={{ color: '#22d3ee' }}>{getTotal()} ج.م</span>
           </div>
+
           <Button 
-            style={{ width: '100%', display: 'flex', gap: '0.5rem', fontSize: '1.125rem', height: '3rem' }}
+            style={{ width: '100%', display: 'flex', gap: '0.5rem', fontSize: '1.125rem', height: '3rem', marginTop: '0.5rem' }}
             disabled={items.length === 0 || isProcessing}
             onClick={handleCheckout}
           >

@@ -1,10 +1,11 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { GlassCard } from "@/components/shared/glass-card";
-import { Settings, User, Shield, Store, Users } from "lucide-react";
+import { Settings, User, Shield, Store, Users, Database } from "lucide-react"; // <--- تمت إضافة Database
 import { UserForm } from "@/components/settings/user-form";
 import { UserManagement } from "@/components/settings/user-management";
-import { StoreForm } from "@/components/settings/store-form"; // <--- تمت الإضافة
+import { StoreForm } from "@/components/settings/store-form";
+import { BackupForm } from "@/components/settings/backup-form"; // <--- تمت الإضافة
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -16,7 +17,7 @@ export default async function SettingsPage() {
   });
 
   // جلب إعدادات المتجر (الاسم والشعار)
-  const storeSettings = await prisma.storeSettings.findFirst(); // <--- تمت الإضافة
+  const storeSettings = await prisma.storeSettings.findFirst();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '800px' }}>
@@ -36,6 +37,17 @@ export default async function SettingsPage() {
         </GlassCard>
       )}
 
+      {/* النسخ الاحتياطي (للمدير فقط) */}
+      {currentUser?.role === 'ADMIN' && (
+        <GlassCard>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+            <Database style={{ width: '1.5rem', height: '1.5rem', color: '#22d3ee' }} />
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, color: '#f8fafc' }}>النسخ الاحتياطي والاستعادة</h2>
+          </div>
+          <BackupForm />
+        </GlassCard>
+      )}
+
       {/* معلومات النظام */}
       <GlassCard>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
@@ -49,7 +61,7 @@ export default async function SettingsPage() {
           </div>
           <div>
             <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.25rem' }}>الإصدار</p>
-            <p style={{ color: '#f8fafc', fontWeight: '500', margin: 0 }}>v1.2.0</p>
+            <p style={{ color: '#f8fafc', fontWeight: '500', margin: 0 }}>v1.3.0</p>
           </div>
         </div>
       </GlassCard>

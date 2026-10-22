@@ -1,25 +1,70 @@
 import { prisma } from "@/lib/prisma";
 import { GlassCard } from "@/components/shared/glass-card";
-import { Eye } from "lucide-react";
+import { Eye, DollarSign, TrendingUp, FileText } from "lucide-react";
 import Link from "next/link";
 
 export default async function ReportsPage() {
+  // جلب الفواتير غير المرتجعة فقط
   const sales = await prisma.sale.findMany({
-    include: {
-      user: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+    where: { isReturned: false },
+    include: { user: true },
+    orderBy: { createdAt: "desc" },
   });
+
+  // حساب إجمالي المبيعات (للفواتير غير المرتجعة)
+  const totalSales = sales.reduce((acc, sale) => acc + sale.total, 0);
+
+  // حساب إجمالي الأرباح
+  const salesWithItems = await prisma.sale.findMany({
+    where: { isReturned: false },
+    include: { items: { include: { product: true } } }
+  });
+
+  const totalProfit = salesWithItems.reduce((acc, sale) => {
+    const saleProfit = sale.items.reduce((itemAcc, item) => {
+      const profitPerItem = (item.unitPrice - item.product.cost) * item.quantity;
+      return itemAcc + profitPerItem;
+    }, 0);
+    return acc + saleProfit;
+  }, 0);
+
+  const totalInvoices = sales.length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#f8fafc' }}>الفواتير والتقارير</h1>
-        <p style={{ color: '#94a3b8', marginTop: '0.25rem' }}>سجل كامل لعمليات المبيعات</p>
+        <p style={{ color: '#94a3b8', marginTop: '0.25rem' }}>سجل كامل لعمليات المبيعات والأرباح</p>
       </div>
 
+      {/* البطاقات الإحصائية */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+        <GlassCard glow>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: '500', color: '#94a3b8' }}>إجمالي المبيعات</h3>
+            <DollarSign style={{ width: '1.25rem', height: '1.25rem', color: '#22d3ee' }} />
+          </div>
+          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', marginTop: '0.5rem', color: '#f8fafc' }}>{totalSales} ج.م</p>
+        </GlassCard>
+
+        <GlassCard glow>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: '500', color: '#94a3b8' }}>إجمالي الأرباح</h3>
+            <TrendingUp style={{ width: '1.25rem', height: '1.25rem', color: '#10b981' }} />
+          </div>
+          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', marginTop: '0.5rem', color: '#10b981' }}>{totalProfit} ج.م</p>
+        </GlassCard>
+
+        <GlassCard glow>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: '500', color: '#94a3b8' }}>عدد الفواتير</h3>
+            <FileText style={{ width: '1.25rem', height: '1.25rem', color: '#3b82f6' }} />
+          </div>
+          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', marginTop: '0.5rem', color: '#f8fafc' }}>{totalInvoices}</p>
+        </GlassCard>
+      </div>
+
+      {/* جدول الفواتير */}
       <GlassCard style={{ padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
           <thead>
