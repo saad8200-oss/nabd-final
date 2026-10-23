@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { UserPlus } from "lucide-react";
 import { createUser } from "@/app/(dashboard)/settings/actions";
 
-export function UserForm() {
+export function UserForm({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +23,6 @@ export function UserForm() {
       setError(result.error);
     } else {
       setIsOpen(false);
-      // يمكنك إضافة إشعار نجاح هنا
       alert("تم إنشاء المستخدم بنجاح!");
     }
     setIsLoading(false);
@@ -74,7 +73,8 @@ export function UserForm() {
             <select name="role" style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', backgroundColor: 'rgba(15,23,42,0.5)', color: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)' }}>
               <option value="CASHIER">كاشير</option>
               <option value="WAREHOUSE">أمين مخزن</option>
-              <option value="ADMIN">مدير</option>
+              {/* إظهار خيار "مدير" فقط للسوبر أدمن */}
+              {isSuperAdmin && <option value="ADMIN">مدير</option>}
             </select>
           </div>
 

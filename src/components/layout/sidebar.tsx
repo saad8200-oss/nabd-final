@@ -3,16 +3,17 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, FileText, Settings, Activity, Truck } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, FileText, Settings, Activity, Truck, Building2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 const navItems = [
+  { name: "إدارة الشركات", href: "/superadmin", icon: Building2, roles: ["ADMIN"], superAdminOnly: true }, // <--- تمت إضافة superAdminOnly
   { name: "لوحة التحكم", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "CASHIER", "WAREHOUSE"] },
   { name: "المخازن", href: "/inventory", icon: Package, roles: ["ADMIN", "WAREHOUSE"] },
-  { name: "الموردين", href: "/suppliers", icon: Truck, roles: ["ADMIN", "WAREHOUSE"] }, // <--- تمت الإضافة هنا
+  { name: "الموردين", href: "/suppliers", icon: Truck, roles: ["ADMIN", "WAREHOUSE"] },
   { name: "نقطة البيع", href: "/pos", icon: ShoppingCart, roles: ["ADMIN", "CASHIER"] },
   { name: "الفواتير والتقارير", href: "/reports", icon: FileText, roles: ["ADMIN"] },
-  { name: "الإعدادات", href: "/settings", icon: Settings, roles: ["ADMIN"], superAdminOnly: true },
+    { name: "الإعدادات", href: "/settings", icon: Settings, roles: ["ADMIN"] },
 ];
 
 function SidebarContent() {
@@ -20,6 +21,7 @@ function SidebarContent() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "";
   const userEmail = (session?.user as any)?.email || "";
+  const isSuperAdmin = userEmail === "admin@nabd.com"; // <--- تمت الإضافة
 
   return (
     <aside style={{ width: '16rem', backgroundColor: 'rgba(15, 23, 42, 0.8)', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, right: 0 }}>
@@ -32,8 +34,8 @@ function SidebarContent() {
         {navItems.map((item) => {
           if (!item.roles.includes(userRole)) return null;
           
-          // منع العميل من رؤية صفحة الإعدادات
-          if (item.superAdminOnly && userEmail !== "admin@nabd.com") return null;
+          // إخفاء الصفحات المخصصة للسوبر أدمن فقط
+          if (item.superAdminOnly && !isSuperAdmin) return null;
 
           const isActive = pathname === item.href;
           return (

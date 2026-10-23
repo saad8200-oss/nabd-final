@@ -11,11 +11,13 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[];
   discount: number;
+  paymentMethod: string;
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   setDiscount: (amount: number) => void;
+  setPaymentMethod: (method: string) => void;
   getSubtotal: () => number;
   getTotal: () => number;
 }
@@ -23,6 +25,7 @@ interface CartStore {
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   discount: 0,
+  paymentMethod: "CASH",
   
   addItem: (product) => {
     set((state) => {
@@ -51,9 +54,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }));
   },
 
-  clearCart: () => set({ items: [], discount: 0 }),
+  clearCart: () => set({ items: [], discount: 0, paymentMethod: "CASH" }),
 
   setDiscount: (amount) => set({ discount: amount }),
+
+  setPaymentMethod: (method) => set({ paymentMethod: method }),
 
   getSubtotal: () => {
     return get().items.reduce((total, item) => total + item.price * item.quantity, 0);

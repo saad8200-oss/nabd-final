@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -13,6 +13,22 @@ enum Role {
   WAREHOUSE
 }
 
+model Company {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  phone         String?
+  logo          String?   // لحفظ الصورة
+  expiryDate    DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  
+  users         User[]
+  products      Product[] // <--- تمت الإضافة
+  sales         Sale[]    // <--- تمت الإضافة
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -20,6 +36,8 @@ model User {
   password  String
   role      Role     @default(CASHIER)
   expiryDate DateTime?
+  companyId String?  // <--- ربط المستخدم بالشركة
+  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sales     Sale[]
@@ -31,6 +49,7 @@ model Supplier {
   phone     String?
   email     String?
   address   String?
+  companyId String?   // <--- ربط المورد بالشركة (اختياري)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   products  Product[]
@@ -48,6 +67,8 @@ model Product {
   lowStockThreshold Int       @default(10)
   supplierId        String?
   supplier          Supplier? @relation(fields: [supplierId], references: [id])
+  companyId         String?   // <--- ربط المنتج بالشركة
+  company           Company?  @relation(fields: [companyId], references: [id])
   isActive          Boolean   @default(true)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -63,7 +84,10 @@ model Sale {
   tax           Float      @default(0)
   discount      Float      @default(0)
   total         Float
-  isReturned    Boolean    @default(false) // <--- تمت إضافة هذا الحقل
+  paymentMethod String     @default("CASH")
+  isReturned    Boolean    @default(false)
+  companyId     String?    // <--- ربط الفاتورة بالشركة
+  company       Company?   @relation(fields: [companyId], references: [id])
   createdAt     DateTime   @default(now())
   items         SaleItem[]
 }

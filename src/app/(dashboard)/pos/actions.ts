@@ -8,7 +8,8 @@ export async function processSale(
   items: CartItem[], 
   total: number, 
   discount: number, 
-  subtotal: number
+  subtotal: number,
+  paymentMethod: string
 ) {
   if (!items || items.length === 0) throw new Error("السلة فارغة");
 
@@ -16,14 +17,14 @@ export async function processSale(
   if (!user) throw new Error("لا يوجد مستخدم مسجل");
 
   await prisma.$transaction(async (tx) => {
-    // إنشاء الفاتورة مع الخصم
     const sale = await tx.sale.create({
       data: {
         invoiceNumber: `INV-${Date.now()}`,
         userId: user.id,
         subtotal: subtotal,
-        discount: discount, // حفظ الخصم
+        discount: discount,
         total: total,
+        paymentMethod: paymentMethod,
         items: {
           create: items.map((item) => ({
             productId: item.id,
@@ -34,7 +35,6 @@ export async function processSale(
       },
     });
 
-    // خصم الكميات من المخزون
     for (const item of items) {
       await tx.product.update({
         where: { id: item.id },

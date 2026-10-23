@@ -23,7 +23,7 @@ export default function POSPage() {
   const [search, setSearch] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const { items, addItem, removeItem, updateQuantity, clearCart, getSubtotal, getTotal, discount, setDiscount } = useCartStore();
+  const { items, addItem, removeItem, updateQuantity, clearCart, getSubtotal, getTotal, discount, setDiscount, paymentMethod, setPaymentMethod } = useCartStore();
 
   useEffect(() => {
     fetch("/api/products")
@@ -36,16 +36,14 @@ export default function POSPage() {
     p.name.includes(search) || (p.category && p.category.includes(search))
   );
 
-  // دالة التعامل مع الباركود (عند الضغط على Enter)
   const handleBarcodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const product = products.find(p => p.barcode === search || p.name === search);
-    
     if (product) {
       addItem({ id: product.id, name: product.name, price: product.price, maxStock: product.stock });
-      setSearch(""); // مسح الحقل بعد الإضافة
+      setSearch("");
     } else {
-      alert("المنتج غير موجود! تأكد من الباركود.");
+      alert("المنتج غير موجود!");
     }
   };
 
@@ -54,7 +52,7 @@ export default function POSPage() {
     
     setIsProcessing(true);
     try {
-      await processSale(items, getTotal(), discount, getSubtotal());
+      await processSale(items, getTotal(), discount, getSubtotal(), paymentMethod);
       clearCart();
       alert("تمت عملية البيع بنجاح! تم خصم الكميات من المخزون.");
     } catch (error) {
@@ -71,18 +69,16 @@ export default function POSPage() {
       {/* قسم المنتجات */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         
-        {/* حقل البحث والباركود */}
         <form onSubmit={handleBarcodeSubmit} style={{ position: 'relative' }}>
           <Search style={{ position: 'absolute', right: '0.75rem', top: '0.75rem', width: '1rem', height: '1rem', color: '#94a3b8' }} />
           <Input 
-            placeholder="امسح الباركود أو ابحث بالاسم..." 
+            placeholder="امسح الباركود أو ابحث..." 
             style={{ paddingRight: '2.5rem', backgroundColor: 'rgba(30, 41, 59, 0.5)', borderColor: 'rgba(255,255,255,0.1)' }}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </form>
 
-        {/* شبكة المنتجات */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem', overflowY: 'auto', paddingBottom: '1rem' }}>
           {filteredProducts.map((product) => (
             <button
@@ -116,14 +112,12 @@ export default function POSPage() {
         border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', 
         boxShadow: '0 8px 32px rgba(0,0,0,0.3)', overflow: 'hidden' 
       }}>
-        {/* رأس السلة */}
         <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)' }}>
           <h2 style={{ fontSize: '1.125rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f8fafc', margin: 0 }}>
             <ShoppingCart style={{ width: '1.25rem', height: '1.25rem' }} /> الفاتورة
           </h2>
         </div>
 
-        {/* محتوى السلة */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {items.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', gap: '0.5rem' }}>
@@ -154,7 +148,6 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* تذييل السلة */}
         <div style={{ padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#94a3b8' }}>
@@ -171,6 +164,20 @@ export default function POSPage() {
               placeholder="0"
               style={{ width: '80px', padding: '0.25rem', borderRadius: '0.25rem', backgroundColor: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', textAlign: 'center' }}
             />
+          </div>
+
+          {/* اختيار طريقة الدفع */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem' }}>
+            <span style={{ color: '#94a3b8' }}>طريقة الدفع:</span>
+            <select 
+              value={paymentMethod} 
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              style={{ padding: '0.25rem', borderRadius: '0.25rem', backgroundColor: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc' }}
+            >
+              <option value="CASH">نقدي (كاش)</option>
+              <option value="CARD">بطاقة ائتمانية (فيزا)</option>
+              <option value="WALLET">محفظة إلكترونية</option>
+            </select>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.125rem', fontWeight: 'bold', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', marginTop: '0.5rem' }}>

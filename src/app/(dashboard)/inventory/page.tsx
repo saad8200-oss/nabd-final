@@ -5,8 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProductForm } from "@/components/inventory/product-form";
 import Image from "next/image";
+import { auth } from "@/auth"; // <--- استيراد auth
 
 export default async function InventoryPage() {
+  // جلب جلسة المستخدم لمعرفة صلاحياته
+  const session = await auth();
+  const userRole = (session?.user as any)?.role || "";
+  
+  // تحديد ما إذا كان المستخدم يملك صلاحية التعديل
+  const canEdit = userRole === "ADMIN" || userRole === "WAREHOUSE";
+
   const products = await prisma.product.findMany({
     orderBy: { createdAt: "desc" },
   });
@@ -19,7 +27,9 @@ export default async function InventoryPage() {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#f8fafc' }}>إدارة المخازن</h1>
           <p style={{ color: '#94a3b8', marginTop: '0.25rem' }}>متابعة الأصناف والكميات المتوفرة</p>
         </div>
-        <ProductForm triggerType="add" />
+        
+        {/* إظهار زر الإضافة فقط للمدير أو أمين المخزن */}
+        {canEdit && <ProductForm triggerType="add" />}
       </div>
 
       {/* شريط البحث */}
@@ -30,7 +40,7 @@ export default async function InventoryPage() {
         </div>
       </GlassCard>
 
-      {/* جدول المنتجات (HTML عادي) */}
+      {/* جدول المنتجات */}
       <GlassCard style={{ padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
           <thead>
@@ -41,7 +51,11 @@ export default async function InventoryPage() {
               <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500' }}>السعر</th>
               <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500' }}>الكمية</th>
               <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500' }}>الحالة</th>
-              <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500', textAlign: 'left' }}>إجراءات</th>
+              
+              {/* عمود الإجراءات يظهر فقط لمن يملك صلاحية */}
+              {canEdit && (
+                <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500', textAlign: 'left' }}>إجراءات</th>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -80,11 +94,15 @@ export default async function InventoryPage() {
                       </Badge>
                     )}
                   </td>
-                  <td style={{ padding: '1rem', textAlign: 'left' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <ProductForm product={product} triggerType="edit" />
-                    </div>
-                  </td>
+                  
+                  {/* عمود الإجراءات يظهر فقط لمن يملك صلاحية */}
+                  {canEdit && (
+                    <td style={{ padding: '1rem', textAlign: 'left' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <ProductForm product={product} triggerType="edit" />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}

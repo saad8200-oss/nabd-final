@@ -3,8 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { auth } from "@/auth"; // <--- استيراد auth
 
+// دالة إضافة مستخدم جديد
 export async function createUser(formData: FormData) {
+  const session = await auth();
+  const currentUser = session?.user as any;
+
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -23,6 +28,11 @@ export async function createUser(formData: FormData) {
     return { error: "البريد الإلكتروني مسجل بالفعل" };
   }
 
+  // تحديد companyId: 
+  // - إذا كان المستخدم الحالي هو "admin@nabd.com" (Super Admin)، يمكنه إنشاء مستخدمين بدون شركة (أو يمكننا إضافة حقل لاختيار الشركة لاحقاً).
+  // - إذا كان مدير شركة، نأخذ companyId الخاص به.
+  const companyId = currentUser?.email === "admin@nabd.com" ? null : currentUser?.companyId;
+
   // تشفير كلمة المرور
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -33,14 +43,15 @@ export async function createUser(formData: FormData) {
       email,
       password: hashedPassword,
       role,
+      companyId, // <--- ربط المستخدم بالشركة
     },
   });
 
   revalidatePath("/settings");
   return { success: true };
 }
-// ... الكود السابق (createUser) ...
 
+// دالة تعديل مستخدم
 export async function updateUser(id: string, formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
@@ -63,10 +74,8 @@ export async function updateUser(id: string, formData: FormData) {
   return { success: true };
 }
 
+// دالة حذف مستخدم
 export async function deleteUser(id: string) {
-  // منع حذف الحساب الحالي (اختياري)
-  // يمكننا إضافة تحقق هنا إذا أردنا
-  
   await prisma.user.delete({
     where: { id },
   });
@@ -74,6 +83,8 @@ export async function deleteUser(id: string) {
   revalidatePath("/settings");
   return { success: true };
 }
+
+// دالة تحديث إعدادات المتجر
 export async function updateStoreSettings(formData: FormData) {
   const storeName = formData.get("storeName") as string;
   const logoUrl = formData.get("logoUrl") as string;
@@ -92,28 +103,26 @@ export async function updateStoreSettings(formData: FormData) {
   }
 
   revalidatePath("/settings");
-  revalidatePath("/login"); // لتحديث صفحة الدخول بالشعار الجديد
+  revalidatePath("/login");
   return { success: true };
 }
-import fs from "fs";
-import path from "path";
 
+// دالة استعادة النسخة الاحتياطية
 export async function restoreBackup(formData: FormData) {
   const file = formData.get("backupFile") as File;
   
   if (!file) return { error: "لم يتم اختيار ملف" };
   
-  // التحقق من الامتداد
   if (!file.name.endsWith(".db")) return { error: "يجب أن يكون الملف بصيغة .db" };
 
   try {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    // مسار حفظ قاعدة البيانات
+    const fs = require("fs");
+    const path = require("path");
     const dbPath = path.join(process.cwd(), "prisma", "dev.db");
     
-    // استبدال الملف الحالي
     fs.writeFileSync(dbPath, buffer);
     
     revalidatePath("/");
