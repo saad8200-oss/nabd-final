@@ -57,7 +57,6 @@ export function ProductForm({ product = null, triggerType = "add" }: ProductForm
 
   return (
     <>
-      {/* زر التعديل (يفتح النافذة) */}
       {triggerType === "edit" && (
         <Button 
           variant="ghost" 
@@ -69,7 +68,6 @@ export function ProductForm({ product = null, triggerType = "add" }: ProductForm
         </Button>
       )}
 
-      {/* نافذة الإضافة/التعديل */}
       <Dialog open={open} onOpenChange={setOpen}>
         {triggerType === "add" && (
           <DialogTrigger asChild>
@@ -80,51 +78,58 @@ export function ProductForm({ product = null, triggerType = "add" }: ProductForm
           </DialogTrigger>
         )}
         
-        <DialogContent className="sm:max-w-[425px] bg-background/95 backdrop-blur-xl border-border">
+        <DialogContent 
+          className="sm:max-w-[425px] bg-[#1e293b] border-[#334155]" 
+          style={{ 
+            backgroundColor: '#1e293b', 
+            borderColor: '#334155',
+            color: '#f8fafc'
+          }}
+        >
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-[#f8fafc]">
               {triggerType === "add" ? "إضافة منتج جديد" : "تعديل المنتج"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4 pt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>اسم المنتج</Label>
-                <Input name="name" defaultValue={product?.name} required />
+                <Label className="text-[#94a3b8]">اسم المنتج</Label>
+                <Input name="name" defaultValue={product?.name} required style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
               </div>
               <div className="space-y-2">
-                <Label>التصنيف</Label>
-                <Input name="category" defaultValue={product?.category} />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>سعر البيع</Label>
-                <Input name="price" type="number" step="0.01" defaultValue={product?.price} required />
-              </div>
-              <div className="space-y-2">
-                <Label>سعر التكلفة</Label>
-                <Input name="cost" type="number" step="0.01" defaultValue={product?.cost} required />
+                <Label className="text-[#94a3b8]">التصنيف</Label>
+                <Input name="category" defaultValue={product?.category} style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>الكمية</Label>
-                <Input name="stock" type="number" defaultValue={product?.stock} required />
+                <Label className="text-[#94a3b8]">سعر البيع</Label>
+                <Input name="price" type="number" step="0.01" defaultValue={product?.price} required style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
               </div>
               <div className="space-y-2">
-                <Label>حد التنبيه</Label>
-                <Input name="lowStockThreshold" type="number" defaultValue={product?.lowStockThreshold || 10} required />
+                <Label className="text-[#94a3b8]">سعر التكلفة</Label>
+                <Input name="cost" type="number" step="0.01" defaultValue={product?.cost} required style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>الباركود</Label>
-                <Input name="barcode" defaultValue={product?.barcode} />
+                <Label className="text-[#94a3b8]">الكمية</Label>
+                <Input name="stock" type="number" defaultValue={product?.stock} required style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
               </div>
               <div className="space-y-2">
-                <Label>رابط الصورة (URL)</Label>
-                <Input name="imageUrl" defaultValue={product?.imageUrl} placeholder="https://..." />
+                <Label className="text-[#94a3b8]">حد التنبيه</Label>
+                <Input name="lowStockThreshold" type="number" defaultValue={product?.lowStockThreshold || 10} required style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[#94a3b8]">الباركود</Label>
+                <Input name="barcode" defaultValue={product?.barcode} style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[#94a3b8]">رابط الصورة (URL)</Label>
+                <Input name="imageUrl" defaultValue={product?.imageUrl} placeholder="https://..." style={{ backgroundColor: 'rgba(15,23,42,0.5)', borderColor: '#334155', color: '#fff' }} />
               </div>
             </div>
             

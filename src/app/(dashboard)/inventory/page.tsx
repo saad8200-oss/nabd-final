@@ -4,15 +4,13 @@ import { AlertTriangle, Box, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProductForm } from "@/components/inventory/product-form";
+import { StockAdjustForm } from "@/components/inventory/stock-adjust-form"; // <--- استيراد المكون الجديد
+import { auth } from "@/auth";
 import Image from "next/image";
-import { auth } from "@/auth"; // <--- استيراد auth
 
 export default async function InventoryPage() {
-  // جلب جلسة المستخدم لمعرفة صلاحياته
   const session = await auth();
   const userRole = (session?.user as any)?.role || "";
-  
-  // تحديد ما إذا كان المستخدم يملك صلاحية التعديل
   const canEdit = userRole === "ADMIN" || userRole === "WAREHOUSE";
 
   const products = await prisma.product.findMany({
@@ -27,8 +25,6 @@ export default async function InventoryPage() {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#f8fafc' }}>إدارة المخازن</h1>
           <p style={{ color: '#94a3b8', marginTop: '0.25rem' }}>متابعة الأصناف والكميات المتوفرة</p>
         </div>
-        
-        {/* إظهار زر الإضافة فقط للمدير أو أمين المخزن */}
         {canEdit && <ProductForm triggerType="add" />}
       </div>
 
@@ -51,8 +47,6 @@ export default async function InventoryPage() {
               <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500' }}>السعر</th>
               <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500' }}>الكمية</th>
               <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500' }}>الحالة</th>
-              
-              {/* عمود الإجراءات يظهر فقط لمن يملك صلاحية */}
               {canEdit && (
                 <th style={{ padding: '1rem', color: '#94a3b8', fontWeight: '500', textAlign: 'left' }}>إجراءات</th>
               )}
@@ -95,10 +89,10 @@ export default async function InventoryPage() {
                     )}
                   </td>
                   
-                  {/* عمود الإجراءات يظهر فقط لمن يملك صلاحية */}
                   {canEdit && (
                     <td style={{ padding: '1rem', textAlign: 'left' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <StockAdjustForm product={product} /> {/* <--- زر حركة المخزون */}
                         <ProductForm product={product} triggerType="edit" />
                       </div>
                     </td>

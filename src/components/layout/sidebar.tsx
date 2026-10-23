@@ -7,13 +7,20 @@ import { LayoutDashboard, Package, ShoppingCart, FileText, Settings, Activity, T
 import { useSession } from "next-auth/react";
 
 const navItems = [
-  { name: "إدارة الشركات", href: "/superadmin", icon: Building2, roles: ["ADMIN"], superAdminOnly: true }, // <--- تمت إضافة superAdminOnly
-  { name: "لوحة التحكم", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "CASHIER", "WAREHOUSE"] },
-  { name: "المخازن", href: "/inventory", icon: Package, roles: ["ADMIN", "WAREHOUSE"] },
-  { name: "الموردين", href: "/suppliers", icon: Truck, roles: ["ADMIN", "WAREHOUSE"] },
-  { name: "نقطة البيع", href: "/pos", icon: ShoppingCart, roles: ["ADMIN", "CASHIER"] },
-  { name: "الفواتير والتقارير", href: "/reports", icon: FileText, roles: ["ADMIN"] },
-    { name: "الإعدادات", href: "/settings", icon: Settings, roles: ["ADMIN"] },
+  // روابط السوبر أدمن (تظهر فقط لـ admin@nabd.com)
+  { name: "لوحة التحكم", href: "/superadmin", icon: LayoutDashboard, roles: ["ADMIN"], superAdminOnly: true },
+  { name: "إدارة الشركات", href: "/superadmin/companies", icon: Building2, roles: ["ADMIN"], superAdminOnly: true },
+  { name: "سجل النظام", href: "/superadmin/audit", icon: FileText, roles: ["ADMIN"], superAdminOnly: true },
+  { name: "الإعدادات", href: "/superadmin/settings", icon: Settings, roles: ["ADMIN"], superAdminOnly: true },
+
+  // روابط مدير الشركة والموظفين (تختفي عن السوبر أدمن)
+  { name: "لوحة التحكم", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "CASHIER", "WAREHOUSE"], hideForSuperAdmin: true },
+  { name: "المخازن", href: "/inventory", icon: Package, roles: ["ADMIN", "WAREHOUSE"], hideForSuperAdmin: true },
+  { name: "الموردين", href: "/suppliers", icon: Truck, roles: ["ADMIN", "WAREHOUSE"], hideForSuperAdmin: true },
+  { name: "نقطة البيع", href: "/pos", icon: ShoppingCart, roles: ["ADMIN", "CASHIER"], hideForSuperAdmin: true },
+  { name: "الفواتير والتقارير", href: "/reports", icon: FileText, roles: ["ADMIN"], hideForSuperAdmin: true },
+  { name: "سجل العمليات", href: "/audit", icon: Activity, roles: ["ADMIN"], hideForSuperAdmin: true },
+  { name: "الإعدادات", href: "/settings", icon: Settings, roles: ["ADMIN"], hideForSuperAdmin: true },
 ];
 
 function SidebarContent() {
@@ -21,7 +28,7 @@ function SidebarContent() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "";
   const userEmail = (session?.user as any)?.email || "";
-  const isSuperAdmin = userEmail === "admin@nabd.com"; // <--- تمت الإضافة
+  const isSuperAdmin = userEmail === "admin@nabd.com";
 
   return (
     <aside style={{ width: '16rem', backgroundColor: 'rgba(15, 23, 42, 0.8)', borderLeft: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0, right: 0 }}>
@@ -32,10 +39,14 @@ function SidebarContent() {
       
       <nav style={{ flex: 1, padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {navItems.map((item) => {
+          // إخفاء الروابط حسب الصلاحية
           if (!item.roles.includes(userRole)) return null;
           
-          // إخفاء الصفحات المخصصة للسوبر أدمن فقط
+          // إخفاء روابط السوبر أدمن عن الآخرين
           if (item.superAdminOnly && !isSuperAdmin) return null;
+          
+          // إخفاء روابط مدير الشركة عن السوبر أدمن
+          if (item.hideForSuperAdmin && isSuperAdmin) return null;
 
           const isActive = pathname === item.href;
           return (

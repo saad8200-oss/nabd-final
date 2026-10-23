@@ -48,6 +48,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             email: user.email,
             name: user.name,
             role: user.role,
+            companyId: user.companyId,
+            isImpersonating: user.isImpersonating,
           };
         } catch (error: any) {
           if (error.message === "LicenseExpired") {
@@ -64,7 +66,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = (user as any).role;
         token.id = user.id;
-        token.email = user.email; // <--- تمت إضافة هذا السطر لتمرير البريد
+        token.email = user.email;
+        token.companyId = (user as any).companyId;
+        token.isImpersonating = (user as any).isImpersonating;
       }
       return token;
     },
@@ -72,9 +76,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         (session.user as any).role = token.role;
         (session.user as any).id = token.id;
-        if (token.email) {
-          session.user.email = token.email as string; // <--- تمت إضافة هذا السطر لضمان ظهور البريد
-        }
+        if (token.email) session.user.email = token.email as string;
+        (session.user as any).companyId = token.companyId;
+        (session.user as any).isImpersonating = token.isImpersonating;
       }
       return session;
     },

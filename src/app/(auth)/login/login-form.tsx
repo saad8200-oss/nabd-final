@@ -1,26 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const searchParams = useSearchParams();
+  
+  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [password, setPassword] = useState(searchParams.get("password") || "");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      const res = await signIn("credentials", { 
-        email, 
-        password, 
-        redirect: false 
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
       if (res?.error) {
@@ -35,6 +37,13 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   };
+
+  // تسجيل الدخول التلقائي إذا كانت البيانات موجودة في الرابط
+  useEffect(() => {
+    if (searchParams.get("email") && searchParams.get("password")) {
+      handleSubmit(); 
+    }
+  }, []);
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

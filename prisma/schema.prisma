@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-provider = "postgresql"
+provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -38,9 +38,16 @@ model User {
   expiryDate DateTime?
   companyId String?  // <--- ربط المستخدم بالشركة
   company   Company? @relation(fields: [companyId], references: [id])
+  
+  // --- حقول الانتحال (الجديدة) ---
+  impersonatedBy String?   // بريد السوبر أدمن الذي قام بالدخول
+  isImpersonating Boolean @default(false) // هل الجلسة الحالية هي جلسة انتحال؟
+  // ------------------------------
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sales     Sale[]
+  auditLogs AuditLog[] // <--- سجل العمليات
 }
 
 model Supplier {
@@ -110,4 +117,15 @@ model StoreSettings {
   storeName String   @default("متجري")
   logoUrl   String?
   updatedAt DateTime @updatedAt
+}
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // نوع العملية (CREATE, UPDATE, DELETE, SALE, RETURN)
+  entity    String   // اسم الجدول (Product, User, Sale, Company)
+  entityId  String?  // معرف العنصر الذي تم التعديل عليه
+  details   String?  // تفاصيل إضافية (مثلاً: "تغيير السعر من 10 إلى 15")
+  userId    String?  // من قام بالعملية
+  user      User?    @relation(fields: [userId], references: [id])
+  companyId String?  // الشركة التابع لها
+  createdAt DateTime @default(now())
 }
